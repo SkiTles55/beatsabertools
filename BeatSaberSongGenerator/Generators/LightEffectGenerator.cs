@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BeatSaberSongGenerator.Extensions;
+using BeatSaberSongGenerator.Mathematics;
 using BeatSaberSongGenerator.Objects;
-using Commons;
-using Commons.Extensions;
-using Commons.Mathematics;
 
 namespace BeatSaberSongGenerator.Generators
 {

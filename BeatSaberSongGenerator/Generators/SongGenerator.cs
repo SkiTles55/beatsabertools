@@ -3,8 +3,6 @@ using System.Linq;
 using BeatSaberSongGenerator.AudioProcessing;
 using BeatSaberSongGenerator.IO;
 using BeatSaberSongGenerator.Objects;
-using Commons;
-using System.Collections.Generic;
 
 namespace BeatSaberSongGenerator.Generators
 {

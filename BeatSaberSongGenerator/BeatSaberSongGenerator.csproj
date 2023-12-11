@@ -76,6 +76,13 @@
     <Compile Include="AudioProcessing\AudioSampleReader.cs" />
     <Compile Include="AudioProcessing\AudioToOggConverter.cs" />
     <Compile Include="AudioProcessing\BeatDetector.cs" />
+    <Compile Include="Extensions\CompoundUnitExtensions.cs" />
+    <Compile Include="Extensions\EnumerableExtensions.cs" />
+    <Compile Include="Extensions\EnumExtensions.cs" />
+    <Compile Include="Extensions\MathExtensions.cs" />
+    <Compile Include="Extensions\UnitValueExtensions.cs" />
+    <Compile Include="Extensions\Vector3DExtensions.cs" />
+    <Compile Include="Extensions\VectorExtensions.cs" />
     <Compile Include="Generators\BaseRhythmGeneratorCombinatory.cs" />
     <Compile Include="Generators\LightEffectGenerator.cs" />
     <Compile Include="Generators\NoteCandidatesStateMachine.cs" />
@@ -83,6 +90,18 @@
     <Compile Include="Generators\TimeConversion.cs" />
     <Compile Include="IO\SongStorer.cs" />
     <Compile Include="Generators\LevelInstructionGenerator.cs" />
+    <Compile Include="Mathematics\ContinuousLine2D.cs" />
+    <Compile Include="Mathematics\MatrixOperations.cs" />
+    <Compile Include="Mathematics\Point2D.cs" />
+    <Compile Include="Mathematics\Point2DXYComparer.cs" />
+    <Compile Include="Mathematics\Point3D.cs" />
+    <Compile Include="Mathematics\PolarPoint.cs" />
+    <Compile Include="Mathematics\SequenceGeneration.cs" />
+    <Compile Include="Mathematics\StatisticalOperations.cs" />
+    <Compile Include="Mathematics\StdDevAggregator.cs" />
+    <Compile Include="Mathematics\Vector.cs" />
+    <Compile Include="Mathematics\Vector2D.cs" />
+    <Compile Include="Mathematics\Vector3D.cs" />
     <Compile Include="Objects\AudioMetadata.cs" />
     <Compile Include="Objects\BeatConfiguration.cs" />
     <Compile Include="Objects\CutDirection.cs" />
@@ -103,7 +122,17 @@
     <Compile Include="Objects\VerticalPosition.cs" />
     <Compile Include="Generators\SongGenerator.cs" />
     <Compile Include="Generators\SongGeneratorSettings.cs" />
+    <Compile Include="Physics\CompoundUnit.cs" />
+    <Compile Include="Physics\FilterFuncs.cs" />
+    <Compile Include="Physics\SIBaseUnit.cs" />
+    <Compile Include="Physics\SIPrefix.cs" />
+    <Compile Include="Physics\Unit.cs" />
+    <Compile Include="Physics\UnitConverter.cs" />
+    <Compile Include="Physics\UnitValue.cs" />
+    <Compile Include="Physics\UnitValueParser.cs" />
+    <Compile Include="Physics\UnitVector3D.cs" />
     <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="StaticRandom.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\NotifyPropertyChangedBase.cs" />
     <Compile Include="ViewModels\RelayCommand.cs" />
@@ -140,10 +169,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\commons\Commons.csproj">
-      <Project>{D0E6B038-C939-487D-BB5E-A6270A0D18F5}</Project>
-      <Name>Commons</Name>
-    </ProjectReference>
     <ProjectReference Include="..\NWaves\NWaves\NWaves.csproj">
       <Project>{3fbf1b3a-3bed-4f2f-8008-871acf83e352}</Project>
       <Name>NWaves</Name>

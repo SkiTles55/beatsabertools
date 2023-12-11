@@ -1,21 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using BeatSaberSongGenerator.Extensions;
+using BeatSaberSongGenerator.Mathematics;
 using BeatSaberSongGenerator.Objects;
-using Commons.DataProcessing;
-using Commons.Extensions;
-using Commons.Mathematics;
-using Commons.Physics;
+using BeatSaberSongGenerator.Physics;
 using NWaves.Transforms;
 using NWaves.Windows;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BeatSaberSongGenerator.AudioProcessing
 {
     public class BeatDetectorResult
     {
         public BeatDetectorResult(
-            double beatsPerMinute, 
-            List<Beat> detectedBeats, 
+            double beatsPerMinute,
+            List<Beat> detectedBeats,
             List<SongIntensity> songIntensities)
         {
             BeatsPerMinute = beatsPerMinute;
@@ -27,6 +26,7 @@ namespace BeatSaberSongGenerator.AudioProcessing
         public List<Beat> DetectedBeats { get; }
         public List<SongIntensity> SongIntensities { get; }
     }
+
     public class BeatDetector
     {
         public BeatDetector()
@@ -43,11 +43,11 @@ namespace BeatSaberSongGenerator.AudioProcessing
         {
             var stftWindowSize = 4096;
             var stepSize = 1024;
-            
+
             var stft = new Stft(windowSize: stftWindowSize, hopSize: stepSize, window: WindowTypes.Hamming);
             var spectrogram = stft.Spectrogram(signal.ToArray());
             var windowPositions = SequenceGeneration
-                .Linspace(stftWindowSize / 2.0, signal.Count-stftWindowSize/2.0, spectrogram.Count)
+                .Linspace(stftWindowSize / 2.0, signal.Count - stftWindowSize / 2.0, spectrogram.Count)
                 .ToList();
 
             var focusedFrequency = DetermineFocusedFrequency(sampleRate, spectrogram, windowPositions);
@@ -59,9 +59,34 @@ namespace BeatSaberSongGenerator.AudioProcessing
             var alignedBeats = MicroAlignBeats(signal, strengthFilteredBeats, stepSize);
 
             var songIntensity = GetSongIntensity(spectrogram, windowPositions, sampleRate, stepSize);
-            var bpm = 60*strengthFilteredBeats.Count() / (signal.Count / (double)sampleRate);
+            var bpm = 60 * strengthFilteredBeats.Count() / (signal.Count / (double)sampleRate);
 
             return new BeatDetectorResult(bpm, alignedBeats, songIntensity);
+        }
+
+        private static List<Point2D> ComputeFftMagnitudeIncreaseSeries(List<float[]> spectrogram, List<double> windowPositions)
+        {
+            const double IncreaseThreshold = 1e-5;
+
+            var fftMagnitudeIncreaseSeries = new List<Point2D>();
+            for (int stepIdx = 1; stepIdx < spectrogram.Count; stepIdx++)
+            {
+                var windowCenterSample = windowPositions[stepIdx];
+                var previousFft = spectrogram[stepIdx - 1];
+                var currentFft = spectrogram[stepIdx];
+
+                var magnitudeIncreaseCount = 0;
+                for (int frequencyBinIdx = 0; frequencyBinIdx < currentFft.Length; frequencyBinIdx++)
+                {
+                    var isIncrease = currentFft[frequencyBinIdx] - previousFft[frequencyBinIdx] > IncreaseThreshold;
+                    if (isIncrease)
+                        magnitudeIncreaseCount++;
+                }
+
+                fftMagnitudeIncreaseSeries.Add(new Point2D(windowCenterSample, magnitudeIncreaseCount));
+            }
+
+            return fftMagnitudeIncreaseSeries;
         }
 
         private List<int> DetermineFocusedFrequency(int sampleRate, List<float[]> spectrogram, List<double> windowPositions)
@@ -189,29 +214,29 @@ namespace BeatSaberSongGenerator.AudioProcessing
                 .Linspace(stftWindowSize / 2.0, signal.Count - stftWindowSize / 2.0, spectrogram.Count)
                 .ToList();
 
-            foreach(var beat in strengthFilteredBeats)
+            foreach (var beat in strengthFilteredBeats)
             {
                 var alignedBeat = new Beat();
                 alignedBeat.Strength = beat.Strength;
-                var searchSampleIndexStart = Math.Max(0,beat.SampleIndex - (stepSizeOfOriginalSearch / 2));
+                var searchSampleIndexStart = Math.Max(0, beat.SampleIndex - (stepSizeOfOriginalSearch / 2));
                 var searchSampleIndexEnd = Math.Min(signal.Count, beat.SampleIndex + (stepSizeOfOriginalSearch / 2));
                 var searchIndexStart = windowPositions.FindIndex(x => x >= searchSampleIndexStart);
                 var searchIndexEnd = windowPositions.FindLastIndex(x => x < searchSampleIndexEnd);
 
                 var bestMatchingIndex = searchIndexStart;
                 var strengthOfBestMatch = 0.0;
-                for(int timeIndex = searchIndexStart + 1; timeIndex <= searchIndexEnd; ++timeIndex)
+                for (int timeIndex = searchIndexStart + 1; timeIndex <= searchIndexEnd; ++timeIndex)
                 {
                     var strengthOfTimeIndex = 0.0;
-                    for(int frequency = 0; frequency < spectrogram[0].Length; ++frequency)
+                    for (int frequency = 0; frequency < spectrogram[0].Length; ++frequency)
                     {
                         var diff = spectrogram[timeIndex][frequency] - spectrogram[timeIndex - 1][frequency];
-                        if(diff>0)
+                        if (diff > 0)
                         {
                             strengthOfTimeIndex += diff;
                         }
                     }
-                    if(strengthOfTimeIndex > strengthOfBestMatch)
+                    if (strengthOfTimeIndex > strengthOfBestMatch)
                     {
                         bestMatchingIndex = timeIndex;
                         strengthOfBestMatch = strengthOfTimeIndex;
@@ -228,7 +253,7 @@ namespace BeatSaberSongGenerator.AudioProcessing
         {
             var fftMagnitudeIncreaseSeries = ComputeFftMagnitudeIncreaseSeries(spectrogram, windowPositions);
 
-            var thresholdWindowSize = (int) Math.Floor(1.5 * sampleRate / stepSize); // Corresponds to 1.5 seconds
+            var thresholdWindowSize = (int)Math.Floor(1.5 * sampleRate / stepSize); // Corresponds to 1.5 seconds
             var dynamicThreshold = ComputeDynamicThreshold(
                 fftMagnitudeIncreaseSeries.Select(p => p.Y).ToList(),
                 thresholdWindowSize, 2, 4);
@@ -238,46 +263,21 @@ namespace BeatSaberSongGenerator.AudioProcessing
                 .MedianFilter(movingAverageWindowSize)
                 .ToList();
             var averagedSignalMax = averagedSignal.Max(p => p.Y);
-            return averagedSignal.Select(p => new SongIntensity((int) p.X, p.Y / averagedSignalMax)).ToList();
-        }
-
-        private static List<Point2D> ComputeFftMagnitudeIncreaseSeries(List<float[]> spectrogram, List<double> windowPositions)
-        {
-            const double IncreaseThreshold = 1e-5;
-
-            var fftMagnitudeIncreaseSeries = new List<Point2D>();
-            for (int stepIdx = 1; stepIdx < spectrogram.Count; stepIdx++)
-            {
-                var windowCenterSample = windowPositions[stepIdx];
-                var previousFft = spectrogram[stepIdx - 1];
-                var currentFft = spectrogram[stepIdx];
-
-                var magnitudeIncreaseCount = 0;
-                for (int frequencyBinIdx = 0; frequencyBinIdx < currentFft.Length; frequencyBinIdx++)
-                {
-                    var isIncrease = currentFft[frequencyBinIdx] - previousFft[frequencyBinIdx] > IncreaseThreshold;
-                    if (isIncrease)
-                        magnitudeIncreaseCount++;
-                }
-
-                fftMagnitudeIncreaseSeries.Add(new Point2D(windowCenterSample, magnitudeIncreaseCount));
-            }
-
-            return fftMagnitudeIncreaseSeries;
+            return averagedSignal.Select(p => new SongIntensity((int)p.X, p.Y / averagedSignalMax)).ToList();
         }
 
         private List<double> ComputeDynamicThreshold(IList<double> signal, int windowSize, int minPeakCount, int maxPeakCount)
         {
             var thresholdPoints = new List<Point2D>();
             var startIdx = 0;
-            while (startIdx+windowSize <= signal.Count)
+            while (startIdx + windowSize <= signal.Count)
             {
                 var valuesInWindow = signal.SubArray(startIdx, windowSize);
                 var orderedValues = valuesInWindow.OrderByDescending(x => x).ToList();
-                var minPeakValue = orderedValues[minPeakCount-1];
-                var maxPeakValue = orderedValues[maxPeakCount-1];
+                var minPeakValue = orderedValues[minPeakCount - 1];
+                var maxPeakValue = orderedValues[maxPeakCount - 1];
                 var combinedThreshold = 0.8 * minPeakValue + 0.2 * maxPeakValue;
-                thresholdPoints.Add(new Point2D(startIdx + windowSize/2, combinedThreshold));
+                thresholdPoints.Add(new Point2D(startIdx + windowSize / 2, combinedThreshold));
                 startIdx += windowSize / 2;
             }
             thresholdPoints.Add(new Point2D(double.NegativeInfinity, thresholdPoints.First().Y));

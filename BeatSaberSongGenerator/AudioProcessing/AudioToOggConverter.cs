@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Commons;
-
-namespace BeatSaberSongGenerator.AudioProcessing
+﻿namespace BeatSaberSongGenerator.AudioProcessing
 {
     /// <summary>
     /// Converts any audio supported by NAudio and converts to .ogg-format
